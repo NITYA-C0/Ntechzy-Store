@@ -34,7 +34,29 @@ router.post(
     }
 
     try {
-      const cart = await Cart.findOne({ userId: req.user.id });
+      let cart = await Cart.findOne({ userId: req.user.id });
+
+      // Recover a guest cart if login/register merging did not complete before checkout.
+      if (!cart?.items?.length) {
+        const guestId = req.headers['x-guest-id'];
+        const guestCart = guestId
+          ? await Cart.findOne({ guestId: String(guestId) })
+          : null;
+
+        if (guestCart?.items?.length) {
+          if (!cart) {
+            cart = await Cart.create({
+              userId: req.user.id,
+              items: guestCart.items.map((item) => item.toObject()),
+            });
+          } else {
+            cart.items = guestCart.items.map((item) => item.toObject());
+            await cart.save();
+          }
+          await Cart.deleteOne({ _id: guestCart._id });
+        }
+      }
+
       if (!cart || cart.items.length === 0) {
         return res.status(400).json({ error: 'Your cart is empty.' });
       }

@@ -35,10 +35,10 @@ export default function Checkout() {
       navigate('/login', { state: { from: '/checkout' }, replace: true });
       return;
     }
-    if (items.length === 0) {
+    if (items.length === 0 && !submitting) {
       navigate('/cart', { replace: true });
     }
-  }, [isAuthenticated, items.length, navigate]);
+  }, [isAuthenticated, items.length, navigate, submitting]);
 
   useEffect(() => {
     if (user) {
@@ -109,7 +109,7 @@ export default function Checkout() {
     }
   };
 
-  if (!isAuthenticated || items.length === 0) return null;
+  if (!isAuthenticated || (items.length === 0 && !submitting)) return null;
 
   return (
     <div className="page checkout-page">
